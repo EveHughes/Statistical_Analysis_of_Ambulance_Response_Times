@@ -25,13 +25,13 @@ all_dispatch_data <-
   get_resource()
 
 # Combine the data for all the years into a single dataframe
-combined_data <- bind_rows(all_dispatch_data, .id = "Year")
+combined_data <- bind_rows(all_dispatch_data)
 
 #### Save data ####
 
 write_csv(
   x = combined_data,
-  file = "data/raw_data/raw_data.csv"
+  file = "data/raw_data/raw_ambulance_response_data.csv"
 )
 
 head(combined_data)
