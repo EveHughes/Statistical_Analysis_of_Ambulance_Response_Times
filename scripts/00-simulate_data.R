@@ -4,13 +4,16 @@
 # Date: 18 September 2024
 # Contact: abdullah.motasim@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: tidyverse, janitor, lubridate 
+# Pre-requisites: tidyverse, janitor, lubridate, truncnorm
+# Any other information needed: None
 
 
 #### Workspace setup ####
+set.seed(1009067563)
 library(tidyverse)
 library(janitor)
 library(lubridate)
+library(truncnorm)
 
 #### Simulate data ####
 
@@ -22,37 +25,42 @@ size <- 30000
 datetime_sequence <- seq(from = as.POSIXct("2023-01-01 00:00"), 
                          to = as.POSIXct("2023-12-31 23:59"), 
                          by = "min")
+
 # Format sequence to match data from Open Data Toronto
 datetime_sequence <- format(datetime_sequence, format = "%Y-%m-%d %H:%M")
 
+# Different calls have different priorities which are predetermined by the MDPS system
+# A weighted sampling is used to account for this disparity 
+priority_numbers = c(1, 3, 4, 5, 9, 11, 12, 13, 14)
+priority_numbers_weights <- c(0.15, 0.2, 0.3, 0.2, 0.1, 0.05, 0.04, 0.03, 0.03)
+
+# Different types of incidents occur more than others
+# A weighted sampling is used to account for this disparity 
+incident_types <- c("Medical", "Motor Vehicle Accident", "Emergency Transfer", 
+                    "Fire", "Airport Standby", "Other")
+incident_types_weights <- c(0.3, 0.3, 0.05, 0.1, 0.03, 0.2)
+
+# There are a different amount of dispatchers sent for each call
+# I assume there are typically 5 dispatchers sent per call
+# We sample from a truncated normal distribution to account for this disparity 
+max_dispactchers <- 22
+min_dispactchers <- 0
+mean <- 5
+sd <- 3
+  
+  
 simulated_data <-
   tibble(
     "ID" = 1:size,
     
-    "Dispatch_Time" = sample(
-      x=datetime_sequence,
-      size=size,
-      replace=TRUE
-    ),
+    "Dispatch_Time" = sample(x=datetime_sequence, size=size, replace=FALSE),
+
+    "Incident_Type" = sample(x = incident_types, size = size, replace = TRUE, 
+                             prob=incident_types_weights),
     
-    # Randomly pick an option, with replacement, size times
-    "Incident_Type" = sample(
-      x = c("Medical", "Motor Vehicle Accident", "Emergency Transfer", 
-            "Fire", "Airport Standby", "Other"),
-      size = size,
-      replace = TRUE),
+    "Priority_Number" = sample(x = priority_numbers, size=size, replace=TRUE, 
+                               prob=priority_numbers_weights),
     
-    # This value defines the priority level of the call
-    # These values are predetermined by the MDPS system
-    "Priority_Number" = sample(
-      x = c(1, 3, 4, 5, 9, 11, 12, 13, 14),
-      size=size, 
-      replace=TRUE),
-    
-    # These values range from 0 to 47, but on average the max value per year is 20
-    # Thus we have chosen to take a maximum value of 22
-    "Units_Arrived_At_Scene" = sample(
-      x = c(0:22),
-      size=size, 
-      replace=TRUE)
+    "Units_Arrived_At_Scene" <- round(rtruncnorm(n = size, a = min_dispactchers,
+                                                 b = max_dispactchers, mean = mean, sd = sd))
   )
