@@ -1,17 +1,16 @@
 #### Preamble ####
-# Purpose: Downloads and saves the data from [...UPDATE THIS...]
+# Purpose: Downloads and saves the data from opendatatoronto
 # Author: Muhammad Abdullah Motasim
-# Date: 18 September 2024
+# Date: 21 September 2024
 # Contact: abdullah.motasim@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: purrr, tidyverse, opendatatoronto
+# Any other information needed: None
 
 
 #### Workspace setup ####
 library(opendatatoronto)
 library(tidyverse)
-library(readxl)
 library(purrr)
 
 # get package
