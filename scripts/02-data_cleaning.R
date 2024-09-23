@@ -39,6 +39,8 @@ cleaned_data <- suppressWarnings(
     second = ifelse(is.na(second), "00", second)) |>
   # create a new date column
   mutate(date = lubridate::ymd_hms(paste(year, month, day, hour, minute, second, sep = "-"))) |>
+  # Remove unneeded columns which describe data types
+  select(-hour, -minute, -second, -day) |>
   #Reorder columns
   select(id, date, incident_type, priority_number, units_arrived_at_scene, forward_sortation_area, everything()))
 
