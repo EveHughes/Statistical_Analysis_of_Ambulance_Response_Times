@@ -1,44 +1,46 @@
 #### Preamble ####
-# Purpose: Cleans the raw plane data recorded by two observers..... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 6 April 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
+# Purpose: Cleans the raw ambulance dispatch response data
+# Author: Muhammad Abdullah Motasim
+# Date: 22 September 2024
+# Contact: abdullah.motasim@mail.utoronto.ca
 # License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Pre-requisites: tidyverse, dplyr, raw_ambulance_response_data.csv
+# Any other information needed? None
 
 #### Workspace setup ####
 library(tidyverse)
+library(dplyr)
 
 #### Clean data ####
-raw_data <- read_csv("inputs/data/plane_data.csv")
+raw_data <- read_csv("data/raw_data/raw_ambulance_response_data.csv")
 
-cleaned_data <-
+cleaned_data <- suppressWarnings(
   raw_data |>
   janitor::clean_names() |>
-  select(wing_width_mm, wing_length_mm, flying_time_sec_first_timer) |>
-  filter(wing_width_mm != "caw") |>
+  # Remove unneeded columns which describe data types
+  select(-field_name, -desctiption_definition, -comments_examples) |>
+  na.omit() |>
+  # Convert date and time variables
+  separate(col = dispatch_time,
+           into = c("date", "time"),
+           sep = " ") |> 
+  # Separate date variable 
+  separate(col = date,
+           into = c("year", "month", "day"),
+           sep = "-") |>
+  # Separate time variable
+  separate(col = time,
+           into = c("hour", "minute", "second"),
+           sep = ":") |>
+  # Ensure we keep values which are at time 00:00:00
   mutate(
-    flying_time_sec_first_timer = if_else(flying_time_sec_first_timer == "1,35",
-                                   "1.35",
-                                   flying_time_sec_first_timer)
-  ) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "490",
-                                 "49",
-                                 wing_width_mm)) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "6",
-                                 "60",
-                                 wing_width_mm)) |>
-  mutate(
-    wing_width_mm = as.numeric(wing_width_mm),
-    wing_length_mm = as.numeric(wing_length_mm),
-    flying_time_sec_first_timer = as.numeric(flying_time_sec_first_timer)
-  ) |>
-  rename(flying_time = flying_time_sec_first_timer,
-         width = wing_width_mm,
-         length = wing_length_mm
-         ) |> 
-  tidyr::drop_na()
+    hour = ifelse(is.na(hour), "00", hour),
+    minute = ifelse(is.na(minute), "00", minute),
+    second = ifelse(is.na(second), "00", second)) |>
+  # create a new date column
+  mutate(date = lubridate::ymd_hms(paste(year, month, day, hour, minute, second, sep = "-"))) |>
+  #Reorder columns
+  select(id, date, incident_type, priority_number, units_arrived_at_scene, forward_sortation_area, everything()))
 
 #### Save data ####
-write_csv(cleaned_data, "outputs/data/analysis_data.csv")
+write_csv(cleaned_data, "data/analysis_data/cleaned_ambulance_response_data.csv")
