@@ -51,16 +51,19 @@ sd <- 3
   
 simulated_data <-
   tibble(
-    "ID" = 1:size,
+    "id" = 1:size,
     
-    "Dispatch_Time" = sample(x=datetime_sequence, size=size, replace=FALSE),
+    "dispatch_time" = sample(x=datetime_sequence, size=size, replace=FALSE),
 
-    "Incident_Type" = sample(x = incident_types, size = size, replace = TRUE, 
+    "incident_type" = sample(x = incident_types, size = size, replace = TRUE, 
                              prob=incident_types_weights),
     
-    "Priority_Number" = sample(x = priority_numbers, size=size, replace=TRUE, 
+    "priority_number" = sample(x = priority_numbers, size=size, replace=TRUE, 
                                prob=priority_numbers_weights),
     
-    "Units_Arrived_At_Scene" <- round(rtruncnorm(n = size, a = min_dispactchers,
+    "units_arrived_at_scene" = round(rtruncnorm(n = size, a = min_dispactchers,
                                                  b = max_dispactchers, mean = mean, sd = sd))
-  )
+)
+
+#### Write_csv
+write_csv(simulated_data, file = "data/raw_data/simulated_ambulance_response_data.csv")
