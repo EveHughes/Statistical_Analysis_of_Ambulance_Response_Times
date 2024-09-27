@@ -1,4 +1,4 @@
-# Emergency Medical Response in Toronto: An Analysis of Ambulance Dispatches
+# Increased Emergency Medical Response Wait Times: The Impact of Higher Call Volume and More Severe Cases Post-COVID-19
 
 ## Overview
 
