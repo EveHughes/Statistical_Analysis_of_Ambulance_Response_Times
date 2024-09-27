@@ -1,15 +1,16 @@
 ---
-title: "My title"
-subtitle: "My subtitle if needed"
+title: "Emergency Medical Response in Toronto: An Analysis of Ambulance Dispatches"
+# subtitle: "My subtitle if needed"
 author: 
-  - First author
-  - Another author
-thanks: "Code and data are available at: LINK."
+  - Muhammad Abdullah Motasim
+thanks: "Code and data are available at: https://github.com/abdullah-motasim/Analyzing-Ambulance-Response-Times"
 date: today
 date-format: long
 abstract: "First sentence. Second sentence. Third sentence. Fourth sentence."
 format: pdf
 number-sections: true
+table-of-contents: true
+toc-depth: 2
 bibliography: references.bib
 ---
 
@@ -17,205 +18,199 @@ bibliography: references.bib
 #| include: false
 #| warning: false
 #| message: false
-
+#| 
+# Package loading
+# install.packages("modeest")
 library(tidyverse)
-library(palmerpenguins)
+library(dplyr)
+library(here)
+library(tibble)
+library(opendatatoronto)
+library(ggplot2)
+library(knitr)
+library(modeest)
+
+# Read data
+raw_data <- read_csv(here("data/raw_data/raw_ambulance_response_data.csv"))
+cleaned_data <- read_csv(here("data/analysis_data/cleaned_ambulance_response_data.csv"))
 ```
 
+Quorto can only read data we load into it, so if we have data in global enviornment, quorto isnt able to use it
+
+use (here::here("/path/to/folder)) to force quorto to look for folder outside of quorto working directory
+
+use citation("library name") to get citation for a library
+
+ggplot(cleaned_data, aes(x=year))+ geom_bar(position = "dodge")+ theme_minimal()
+
+ggplot(cleaned_data, aes(x=year, fill=(units_arrived_at_scene)))+ geom_bar(position = "dodge")+ theme_minimal()+ \# theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 # Introduction
 
-You can and should cross-reference sections and sub-sections. We use @citeR and @rohan.
+Efficient ambulances response times play a key role in saving saving peoples lives, especially in severe and sudden health complications such as cardiac arrests, trauma, and motor vehicle accidents. A medical study from 2011 found for cardiac arrest a 1 minute reduction in response time improved a persons odds of survival by 24% @citeBMJ. Furthermore, Toronto is facing issues retaining Emergency Medical Services (EMS) workers @citeCBCParamedicRetention leading to increased call wait times @citeCBC911WaitTimes and lower number of ambulances available to be dispatched @citeCBCAmbulanceResponseTimes.
 
-The remainder of this paper is structured as follows. @sec-data....
+This paper hopes to analyze the number and types of dispatch requests to EMS services within Toronto to identify the reason for the reduced amount of ambulances available and the increased call wait times. This is achieved utilizing a data set procured from OpenDataToronto @citeOpenDataTorontoWebsite containing information on the number of dispatches made per year, the severity of these reports and the number of units dispatched. We utilize this information to determine \<talk about how we found that the number of calls was increasing each year and the so was the severity. Analyze the severity data to see of higher severity means more dispatchers and if so say that the increase in the severity led to more calls and also more units needed per call, coupled with ems workers facing shortages and burnout led to poor ems services available to Canadians. Say thus is important as experts can now better tackle the underlying issues causing delayed ems response times, saving lives.\>
 
-
+The remainder of this paper is structured as follows. @sec-data discusses the datatypes included in the raw data, the cleaning process for the data, and reason for selecting the data set we did. @sec-results analyzes the trends and correlations present between different variables utilizing tabular and graphical means. @sec-discussion the results of @sec-results going into detail on what these results can tell us about the cause for delayed ems response time. Lastly, @sec-nextsteps discusses limitations within the data and steps for improvement.
 
 # Data {#sec-data}
 
-Some of our data is of penguins (@fig-bills), from @palmerpenguins.
+## Raw Data
+
+The data utilized for the analysis was sourced from the Open Data Toronto website and was read into the paper using the opendatatoronto library @citeOpenDataToronto, and all analysis was performed using R @citeR and the following packages: tidyverse @citeTidyverse, janitor @citeJanitor, lubridate @citeLubridate, truncnorm @citeTruncnorm, purrr @citePurrr, dplyr @citeDplyr, here @citeHere, ggplot2, @citeGgplot2, and knitr @citeKnitr. The chosen data set is called "Paramedic Services Incident Data" @citeOpenDataTorontoDataset and contains information about ambulances dispatches sent within Toronto from 2017-2022, the data is refreshed annually and was last updated October 5, 2023. The data is sourced and published by Toronto Paramedic Services meaning they decide the type of data collected and the method of collection. This set was chosen due to the large amount of data it contained, with over 1.7 million entries over the 5 years recorded meaning we could analyze trends over multiple years.
+
+The raw downloaded data is shown in @tbl-raw-data-1 and @tbl-raw-data-2, as you can see it contains a total of 9 variables:
+
+-   **ID** - Incident ID number associated with the Computer Aided Dispatch (CAD) record.
+-   **Dispatch_Time** - Time the first Paramedic unit was assigned to the incident.
+-   **Incident_Type** - Type of incident reported; possible values are:
+    -   '-' (no value)
+    -   Airport Standby
+    -   Emergency Transfer
+    -   Fire
+    -   Medical
+    -   Motor Vehicle Accident
+-   **Priority_Number** - Priority level determined using the Medical Priority Dispatch System (MPDS), (see @sec-appendixA for details).
+-   **Units_Arrived_At_Scene** - Number of Paramedic units that arrived on scene of incident
+-   **Forward_Sortation_Area** - General location of incident based on Postal Code Forward Sortation Area
+
+-   **Field Name** - Gives names of field such as ID, Dispatch_Time, Incident_Type, etc.
+-   **Desctiption/Definition** - Describes what each field name means
+-   **Comments/Examples** - Provides additional information on field name descriptions
 
 ```{r}
-#| label: fig-bills
-#| fig-cap: Bills of penguins
-#| echo: false
-
-ggplot(penguins, aes(x = island, fill = species)) +
-  geom_bar(alpha = 0.8) +
-  scale_fill_manual(values = c("darkorange","purple","cyan4"),
-                    guide = "none") +
-  theme_minimal() +
-  facet_wrap(~species, ncol = 1) +
-  coord_flip()
-```
-
-Talk more about it.
-
-And also planes (@fig-planes). (You can change the height and width, but don't worry about doing that until you have finished every other aspect of the paper - Quarto will try to make it look nice and the defaults usually work well once you have enough text.)
-
-```{r}
-#| label: fig-planes
-#| fig-cap: Relationship between wing length and width
+#| label: tbl-raw-data-1
+#| tbl-cap: First 6 entires of the Paramedic Services Incident Dataset
 #| echo: false
 #| warning: false
 #| message: false
 
-analysis_data <- read_csv(here::here("data/analysis_data/analysis_data.csv"))
-
-analysis_data |> 
-  ggplot(aes(x = width, y = length)) +
-  geom_point(alpha = 0.8) +
-  theme_minimal() +
-  labs(x = "Wing width (mm)",
-       y = "Wing length (mm)")
+head_raw_data <- head(raw_data)
+# Note there is a type in Description within the original data set itself
+knitr::kable(head_raw_data[,1:5], "simple",   col.names = c('ID', 'Dispatch_Time', 'Incident_Type', 'Priority_Number', 'Units_Arrived_At_Scene'))
 ```
 
-Talk way more about it. 
+```{r}
+#| label: tbl-raw-data-2
+#| tbl-cap: First 6 entires of the Paramedic Services Incident Dataset (cont.)
+#| echo: false
+#| warning: false
+#| message: false
+# Table is broken into 2 sections to show all data on a single page
+knitr::kable(head_raw_data[,6:9], "simple",   col.names = c( 'Forward_Sortation_Area', 'Field Name', 'Desctiption/Definition', 'Comments/Examples'))
+```
 
+## Cleaned Data
 
-
-# Model
-
-The goal of our modelling strategy is twofold. Firstly,...
-
-Here we briefly describe the Bayesian analysis model used to investigate... Background details and diagnostics are included in [Appendix -@sec-model-details].
-
-## Model set-up
-
-Define $y_i$ as the number of seconds that the plane remained aloft. Then $\beta_i$ is the wing width and $\gamma_i$ is the wing length, both measured in millimeters.  
-
-\begin{align} 
-y_i|\mu_i, \sigma &\sim \mbox{Normal}(\mu_i, \sigma) \\
-\mu_i &= \alpha + \beta_i + \gamma_i\\
-\alpha &\sim \mbox{Normal}(0, 2.5) \\
-\beta &\sim \mbox{Normal}(0, 2.5) \\
-\gamma &\sim \mbox{Normal}(0, 2.5) \\
-\sigma &\sim \mbox{Exponential}(1)
-\end{align}
-
-We run the model in R [@citeR] using the `rstanarm` package of @rstanarm. We use the default priors from `rstanarm`.
-
-
-### Model justification
-
-We expect a positive relationship between the size of the wings and time spent aloft. In particular...
-
-We can use maths by including latex between dollar signs, for instance $\theta$.
-
-
-# Results
-
-Our results are summarized in @tbl-modelresults.
+During the creation of the raw data set the Field Names, Desctiption/Definition, and Comments/Examples columns were added as part of the process combining the data for all 5 years. However, we don't use these columns within our numerical analysis so they were removed within the data cleaning to reduce the data size. Furthermore, the dispatch_time column was formatted from type dbl to type POSIXct and two new columns were added containing the year and month of the report in order to allow for efficient plotting of dates. Lastly, the cleaned data was tested to ensure no missing values and all given values fell within their predetermined values. The cleaned data is shown in @tbl-cleaned-data-1 and @tbl-cleaned-data-2, @fig-year-vs-dispatches showcases the total number of dispatches per year. 
 
 ```{r}
+#| label: tbl-cleaned-data-1
+#| tbl-cap: First 6 entires of the cleaned ambulance response data
 #| echo: false
-#| eval: true
 #| warning: false
 #| message: false
 
-library(rstanarm)
-
-first_model <-
-  readRDS(file = here::here("models/first_model.rds"))
+head_cleaned_data <- head(cleaned_data)
+# Note there is a type in Description within the original data set itself
+knitr::kable(head_cleaned_data[,1:5], "simple",   col.names = c('id', 'dispatch_time', 'incident_type', 'priority_number', 'units_arrived_at_scene'))
 ```
 
 ```{r}
+#| label: tbl-cleaned-data-2
+#| tbl-cap: First 6 entires of the cleaned ambulance response data (cont.)
 #| echo: false
-#| eval: true
-#| label: tbl-modelresults
-#| tbl-cap: "Explanatory models of flight time based on wing width and wing length"
 #| warning: false
+#| message: false
 
-modelsummary::modelsummary(
-  list(
-    "First model" = first_model
-  ),
-  statistic = "mad",
-  fmt = 2
+# Table is broken into 2 sections to show all data on a single page
+knitr::kable(head_cleaned_data[,6:8], "simple",   col.names = c( 'forward_sortation_area', 'year', 'month'))
+```
+
+```{r}
+#| label: fig-year-vs-dispatches
+#| fig-cap: Year vs. Total Number of Dispatches
+#| echo: false
+#| warning: false
+#| message: false
+
+cleaned_data |>
+ggplot(aes(x=year))+ 
+  xlab("Year")+
+  ylab("# of Dispatches")+
+  geom_bar(position = "dodge")+ 
+  scale_x_continuous(breaks = seq(min(cleaned_data$year), max(cleaned_data$year), by = 1)) + 
+  theme_minimal()
+
+```
+
+## Summary of Data
+We are only interested in the trend in dispatches over the years and @fig-year-vs-dispatches shows that there isn't much change in total number of dispatches over years meaning any calculated statistic on dispatch_time would not be of use. Thus,the only data types for which we can compute useful statistics are incident_type, priority_number, and units_arrived_at_scene. @tbl-cleaned-data-code shows the summary of these calculated statistics with mean for continuous data and mode for categorical data. 
+
+
+```{r}
+#| label: tbl-cleaned-data-code
+#| tbl-cap: Summary of Incident Data Statistics
+#| echo: false
+#| warning: false
+#| message: false
+
+
+# calculate statistics
+mode_incident_type <- mlv(cleaned_data$incident_type, method = "mfv")
+mode_priority_number <- mlv(cleaned_data$priority_number, method = "mfv")
+mean_units_at_scene <- mean(cleaned_data$units_arrived_at_scene)
+
+# Create a data frame to show values
+summary_table <- data.frame(
+  Field_Name = c("Units Arrived at Scene", "Mode Incident Type", "Mode Priority Number"),
+  Value = c(mean_units_at_scene, mode_incident_type, mode_priority_number)
 )
+
+# Print the table
+kable(summary_table)
 ```
 
+# Results {#sec-results}
 
-
-
-# Discussion
+# Discussion {#sec-discussion}
 
 ## First discussion point {#sec-first-point}
 
-If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this. 
+If my paper were 10 pages, then should be be at least 2.5 pages. The discussion is a chance to show off what you know and what you learnt from all this.
 
 ## Second discussion point
 
 ## Third discussion point
 
-## Weaknesses and next steps
 
-Weaknesses and next steps should also be included.
+# Weaknesses and next steps {#sec-nextsteps}
+
+Data doesn't have arrival times
 
 \newpage
 
 \appendix
 
-# Appendix {-}
+# Appendix {.unnumbered}
 
+## Appendix A {#sec-appendixA}
 
-# Additional data details
+Information on priority levels of Medical Priority Dispatch System (MPDS) ratings was sourced from @citePriorityDocument. Below is the severity of each level.
 
-# Model details {#sec-model-details}
-
-## Posterior predictive check
-
-In @fig-ppcheckandposteriorvsprior-1 we implement a posterior predictive check. This shows...
-
-In @fig-ppcheckandposteriorvsprior-2 we compare the posterior with the prior. This shows... 
-
-```{r}
-#| eval: true
-#| echo: false
-#| message: false
-#| warning: false
-#| label: fig-ppcheckandposteriorvsprior
-#| layout-ncol: 2
-#| fig-cap: "Examining how the model fits, and is affected by, the data"
-#| fig-subcap: ["Posterior prediction check", "Comparing the posterior with the prior"]
-
-pp_check(first_model) +
-  theme_classic() +
-  theme(legend.position = "bottom")
-
-posterior_vs_prior(first_model) +
-  theme_minimal() +
-  scale_color_brewer(palette = "Set1") +
-  theme(legend.position = "bottom") +
-  coord_flip()
-```
-
-## Diagnostics
-
-@fig-stanareyouokay-1 is a trace plot. It shows... This suggests...
-
-@fig-stanareyouokay-2 is a Rhat plot. It shows... This suggests...
-
-```{r}
-#| echo: false
-#| eval: true
-#| message: false
-#| warning: false
-#| label: fig-stanareyouokay
-#| fig-cap: "Checking the convergence of the MCMC algorithm"
-#| fig-subcap: ["Trace plot", "Rhat plot"]
-#| layout-ncol: 2
-
-plot(first_model, "trace")
-
-plot(first_model, "rhat")
-```
-
+| Priority \# |                                Description |
+|-------------|-------------------------------------------:|
+| 5           |                       Alpha (Low Priority) |
+| 4           |                       Bravo (Mid Priority) |
+| 3           |        Charlie (Possibly Life Threatening) |
+| 1           |                   Delta (Life Threatening) |
+| 9           |       Echo (Full Arrest or Imminent Death) |
+| 11          |         Alpha1 (Most Urgency within Alpha) |
+| 12          |          Alpha2 (Mid Urgency within Alpha) |
+| 13          |        Alpha3 (Least Urgency within Alpha) |
+| 14          | Code 2 (Non-emergency transport requests.) |
 
 
 \newpage
 
-
 # References
-
-
