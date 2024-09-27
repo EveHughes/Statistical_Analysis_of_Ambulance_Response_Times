@@ -38,11 +38,32 @@ cleaned_data <- suppressWarnings(
     minute = ifelse(is.na(minute), "00", minute),
     second = ifelse(is.na(second), "00", second)) |>
   # create a new date column
-  mutate(date = lubridate::ymd_hms(paste(year, month, day, hour, minute, second, sep = "-"))) |>
+  mutate(dispatch_time = lubridate::ymd_hms(paste(year, month, day, hour, minute, second, sep = "-"))) |>
   # Remove unneeded columns which describe data types
   select(-hour, -minute, -second, -day) |>
   #Reorder columns
-  select(id, date, incident_type, priority_number, units_arrived_at_scene, forward_sortation_area, everything()))
+  select(id, dispatch_time, incident_type, priority_number, units_arrived_at_scene, forward_sortation_area, everything()))
+
+#### Test data ####
+
+# Test for no negative number of dispatchers
+paste("Negative Number of Dispatchers Test: ", cleaned_data$units_arrived_at_scene |> min() < 0)
+
+# test for dates within range specified
+dates <- c(2017, 2018, 2019, 2020, 2021, 2022)
+paste("Dispatch Time out-of-range Test: ", any(!cleaned_data$dispatch_time %in% priority_levels))
+
+# test for priority level meets requirements
+priority_levels <- c(1, 3, 4, 5, 9, 11, 12, 13, 14)
+paste("Priority Level Outside of Range Test: ", any(!cleaned_data$priority_number %in% priority_levels))
+
+# test for missing values
+any_NA_values <- all(is.na(cleaned_data$id))
+any_NA_values <- all(is.na(cleaned_data$date))
+any_NA_values <- all(is.na(cleaned_data$incident_type))
+any_NA_values <- all(is.na(cleaned_data$priority_number))
+any_NA_values <- all(is.na(cleaned_data$units_arrived_at_scene))
+paste("Any NA Values Test: ", any_NA_values)
 
 #### Save data ####
 write_csv(cleaned_data, "data/analysis_data/cleaned_ambulance_response_data.csv")
