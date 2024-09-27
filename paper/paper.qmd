@@ -1,5 +1,5 @@
 ---
-title: "Emergency Medical Response in Toronto: An Analysis of Ambulance Dispatches"
+title: "Increased Emergency Medical Response Wait Times: The Impact of Higher Call Volume and More Severe Cases Post-COVID-19"
 author: 
   - Muhammad Abdullah Motasim
 thanks: "Code and data are available at: https://github.com/abdullah-motasim/Analyzing-Ambulance-Response-Times"
