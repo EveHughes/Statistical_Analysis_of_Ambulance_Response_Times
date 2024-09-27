@@ -1,8 +1,8 @@
-# Analyzing Ambulance Response Times
+# Emergency Medical Response in Toronto: An Analysis of Ambulance Dispatches
 
 ## Overview
 
-This repo contains all the data and scripts required to analyze the response time of Toronto Paramedic Services from 2017 to 2022
+This repo contains all the data and scripts required to analyze the response time of Toronto Paramedic Services from 2017 to 2022. Overall, it was found that after COVID-19 there was an increase in the frequency and severity of calls to the Toronto Paramedic Services.
 
 ## File Structure
 
