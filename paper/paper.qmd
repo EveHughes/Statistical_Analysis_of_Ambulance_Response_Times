@@ -1,6 +1,5 @@
 ---
 title: "Emergency Medical Response in Toronto: An Analysis of Ambulance Dispatches"
-# subtitle: "My subtitle if needed"
 author: 
   - Muhammad Abdullah Motasim
 thanks: "Code and data are available at: https://github.com/abdullah-motasim/Analyzing-Ambulance-Response-Times"
@@ -38,23 +37,23 @@ cleaned_data <- read_csv(here("data/analysis_data/cleaned_ambulance_response_dat
 
 # Introduction
 
-Efficient ambulances response times play a key role in saving saving peoples lives, especially in severe and sudden health complications such as cardiac arrests, trauma, and motor vehicle accidents. A medical study from 2011 found for cardiac arrest a 1 minute reduction in response time improved a persons odds of survival by 24% @citeBMJ. Furthermore, Toronto is facing issues retaining Emergency Medical Services (EMS) workers @citeCBCParamedicRetention leading to increased call wait times @citeCBC911WaitTimes and lower number of ambulances available to be dispatched @citeCBCAmbulanceResponseTimes.
+Efficient ambulance response times play a key role in saving people's lives, especially in severe and sudden health complications such as cardiac arrests, trauma, and motor vehicle accidents. A medical study from 2011 found that for cardiac arrest a 1 minute reduction in response time improved a person's odds of survival by 24% @citeBMJ. Furthermore, Toronto is facing issues retaining Emergency Medical Services (EMS) workers @citeCBCParamedicRetention leading to increased call wait times @citeCBC911WaitTimes and a lower number of ambulances available to be dispatched @citeCBCAmbulanceResponseTimes.
 
-This paper hopes to analyze the number and types of dispatch requests to EMS services within Toronto to identify the reason for the reduced amount of ambulances available and the increased call wait times. This is achieved utilizing a data set procured from OpenDataToronto @citeOpenDataTorontoWebsite containing information on the number of dispatches made per year, the severity of these reports and the number of units dispatched. We utilize this information to determine that COVID-19 reduced the number of calls received by Toronto  Paramedic Services, but also caused EMS workers to change their careers. Paired with an increase in the number of life-threatening and possibly life-threatening incidents meant the city was under equipped with experienced first responders to deal with the complex situations. Overall, all these factors lead to an increase in call wait times and decreased amount of available ambulances.
+This paper hopes to analyze the number and types of dispatch requests to EMS services within Toronto to identify the reason for the reduced amount of ambulances available and the increased call wait times. This is achieved utilizing a data set procured from OpenDataToronto @citeOpenDataTorontoWebsite containing information on the number of dispatches made per year, the severity of these reports, and the number of units dispatched. We utilize this information to determine that COVID-19 reduced the number of calls received by Toronto  Paramedic Services, but also caused EMS workers to change their careers. Paired with an increase in the number of life-threatening and possibly life-threatening incidents the city was under-equipped with experienced first responders to deal with the complex situations. Overall, all these factors lead to an increase in call wait times and a decreased amount of available ambulances.
 
-The remainder of this paper is structured as follows. @sec-data discusses the datatypes included in the raw data, the cleaning process for the data, and reason for selecting the data set we did. @sec-results analyzes the trends and correlations present between different variables utilizing tabular and graphical means. @sec-discussion discusses the results of @sec-results going into detail on what these results can tell us about the cause for delayed ems response time. Lastly, @sec-nextsteps discusses limitations within the data and steps for improvement.
+The remainder of this paper is structured as follows. @sec-data discusses the data types included in the raw data, the cleaning process for the data, and the reason for selecting the data set we did. @sec-results analyzes the trends and correlations between different variables utilizing tabular and graphical means. @sec-discussion discusses the results of @sec-results going into detail on what these results can tell us about the cause for delayed ems response time. Lastly, @sec-nextsteps discusses limitations within the data and steps for improvement.
 
 # Data {#sec-data}
 
 ## Raw Data
 
-The data utilized for the analysis was sourced from the Open Data Toronto website and was read into the paper using the opendatatoronto library @citeOpenDataToronto, and all analysis was performed using R @citeR and the following packages: tidyverse @citeTidyverse, janitor @citeJanitor, lubridate @citeLubridate, truncnorm @citeTruncnorm, purrr @citePurrr, dplyr @citeDplyr, here @citeHere, ggplot2, @citeGgplot2, knitr @citeKnitr, and modeest @citeModeest. The chosen data set is called "Paramedic Services Incident Data" @citeOpenDataTorontoDataset and contains information about ambulances dispatches sent within Toronto from 2017-2022, the data is refreshed annually and was last updated October 5, 2023. The data is sourced and published by Toronto Paramedic Services meaning they decide the type of data collected and the method of collection. Online research shows they likely collect the data electronically as ambulance dispatches are made dispatchers manually record information such as the type of incident, priority level, dispatch time, etc. this data is likely combined into the data set and released.Note, this set was chosen due to the large amount of data it contained, with over 1.7 million entries over the 5 years recorded meaning we could analyze trends over multiple years.
+The data utilized for the analysis was sourced from the Open Data Toronto website and was read into the paper using the opendatatoronto library @citeOpenDataToronto and all analysis was performed using R @citeR and the following packages: tidyverse @citeTidyverse, janitor @citeJanitor, lubridate @citeLubridate, truncnorm @citeTruncnorm, purrr @citePurrr, dplyr @citeDplyr, here @citeHere, ggplot2, @citeGgplot2, knitr @citeKnitr, and modeest @citeModeest. The chosen data set is called "Paramedic Services Incident Data" @citeOpenDataTorontoDataset and contains information about ambulance dispatches sent within Toronto from 2017-2022, the data is refreshed annually and was last updated on October 5, 2023. The data is sourced and published by Toronto Paramedic Services meaning they decide the type of data collected and the collection method. Online research shows they likely collect the data electronically as ambulance dispatches are made dispatchers manually record information such as the type of incident, priority level, dispatch time, etc. This data is likely combined into the data set and released. Note, that this set was chosen due to the large amount of data it contained, with over 1.7 million entries over the 5 years recorded meaning we could analyze trends over multiple years.
 
 The raw downloaded data is shown in @tbl-raw-data-1 and @tbl-raw-data-2, as you can see it contains a total of 9 variables:
 
 -   **ID** - Incident ID number associated with the Computer Aided Dispatch (CAD) record.
 
--   **Dispatch_Time** - Time the first Paramedic unit was assigned to the incident.
+-   **Dispatch_Time** - The time the first Paramedic unit was assigned to the incident.
 
 -   **Incident_Type** - Type of incident reported; possible values are:
 
@@ -67,13 +66,13 @@ The raw downloaded data is shown in @tbl-raw-data-1 and @tbl-raw-data-2, as you 
 
 -   **Priority_Number** - Priority level determined using the Medical Priority Dispatch System (MPDS), (see @sec-appendix for details).
 
--   **Units_Arrived_At_Scene** - Number of Paramedic units that arrived on scene of incident
+-   **Units_Arrived_At_Scene** - Number of Paramedic units that arrived on the scene of the incident
 
--   **Forward_Sortation_Area** - General location of incident based on Postal Code Forward Sortation Area
+-   **Forward_Sortation_Area** - General location of the incident based on Postal Code Forward Sortation Area
 
 -   **Field Name** - Gives names of field such as ID, Dispatch_Time, Incident_Type, etc.
 
--   **Desctiption/Definition** - Describes what each field name means
+-   **Description/Definition** - Describes what each field name means
 
 -   **Comments/Examples** - Provides additional information on field name descriptions
 
@@ -85,7 +84,7 @@ The raw downloaded data is shown in @tbl-raw-data-1 and @tbl-raw-data-2, as you 
 #| message: false
 
 head_raw_data <- head(raw_data)
-# Note there is a type in Description within the original data set itself
+# Note there is a typo in Description within the original data set itself
 knitr::kable(head_raw_data[,1:5], "simple",   col.names = c('ID', 'Dispatch_Time', 'Incident_Type', 'Priority_Number', 'Units_Arrived_At_Scene'))
 ```
 
@@ -95,13 +94,15 @@ knitr::kable(head_raw_data[,1:5], "simple",   col.names = c('ID', 'Dispatch_Time
 #| echo: false
 #| warning: false
 #| message: false
+
+
 # Table is broken into 2 sections to show all data on a single page
 knitr::kable(head_raw_data[,6:9], "simple",   col.names = c( 'Forward_Sortation_Area', 'Field Name', 'Desctiption/Definition', 'Comments/Examples'))
 ```
 
 ## Cleaned Data
 
-Since the data set is rather large the main goal when cleaning the data was to reduce the size. During the creation of the raw data set the Field Names, Desctiption/Definition, and Comments/Examples columns were added as part of the process combining the data for all 5 years. However, we don't use these columns within our numerical analysis so they were removed within the data cleaning to reduce the data size. Also, the ID and forward_sortation-area were removed as they didn't provide us with any useful information. The cleaned data is shown in @tbl-cleaned-data-1.
+Since the data set is large, the main goal when cleaning the data was to reduce the size, meaning the cleaned data removed irrelevant columns from the raw data. The cleaned data shown in @tbl-cleaned-data-1  contains fewer columns than the raw data reducing the overall size significantly.
 
 ```{r}
 #| label: tbl-cleaned-data-1
@@ -117,7 +118,7 @@ knitr::kable(head_cleaned_data[,1:5], "simple",   col.names = c('dispatch_time',
 
 ## Summary of Data
 
-As we are interested in understanding the reason behind the reduced ambulance availability the only data types for which we can compute useful statistics are: number of dispatches per year, incident_type, priority_number, and units_arrived_at_scene. @tbl-cleaned-data-summary shows a brief summary of the data columns we are interested in, the summary of these calculated statistics with mean for continuous data and mode for categorical data. The total number of dispatches per year is visualized in @fig-year-vs-priority. on average the Toronto Paramedic Service's received 285 000 calls or 780 calls per day, with an average of 1.1 units sent per call that is approximately 860 units dispatched per day.
+As we are interested in understanding the reason behind the reduced ambulance availability the only data types for which we can compute useful statistics are: the number of dispatches per year, incident_type, priority_number, and units_arrived_at_scene. @tbl-cleaned-data-summary shows a summary of the data columns we are interested in, the summary of these calculated statistics with mean for continuous data and mode for categorical data. The total number of dispatches per year is visualized in @fig-year-vs-priority. On average, the Toronto Paramedic Service received 285 000 calls or 780 calls per day, with an average of 1.1 units sent per call which is approximately 860 units dispatched daily.
 
 ```{r}
 #| label: tbl-cleaned-data-summary
@@ -166,7 +167,7 @@ ggplot(aes(x=year))+
 
 # Results {#sec-results}
 
-@fig-year-vs-dispatches appears to show there isn't much increase in the number of dispatches over the years, but we have to keep in mind the scale is in the hundreds of thousands, overall there is an increase of 8 000 calls per year with a dip in number of calls during the COVID-19 pandemic causing people to delay medical care @citeAvoidingCare. Overall, roughly 860 units were dispatched per day within the city and as of 2024 the Toronto Paramedic Services has a fleet of 236 ambulances @citeParamedicReport meaning each ambulance would need to be used 3.5 times per day to meet the demand explaining the lack of ambulances available for the city to use. @fig-year-vs-priority shows the change in priority numbers of the calls over the years, as seen priority numbers 1 and 3 increase and the rest decrease or stay the same near the end of 2022. Also, it is worth noting I have chosen to drop low priority numbers like: 11, 12, 13, and 14 as they occur less than 40 times which is a minuscule amount compared with the rest of the data.
+@fig-year-vs-dispatches appears to show there isn't much increase in the number of dispatches over the years. However, we have to keep in mind the scale is in the hundreds of thousands, overall there is an increase of 8 000 calls per year with a dip in the number of calls during the COVID-19 pandemic causing people to delay medical care @citeAvoidingCare. Overall, roughly 860 units were dispatched per day within the city and as of 2024, the Toronto Paramedic Services has a fleet of 236 ambulances @citeParamedicReport meaning each ambulance would need to be used 3.5 times per day to meet the demand explaining the lack of ambulances available for the city to use. @fig-year-vs-priority shows the change in priority numbers of the calls over the years, as seen priority numbers 1 and 3 increase and the rest decrease or stay the same near the end of 2022. Also, it is worth noting I have chosen to drop low-priority numbers like 11, 12, 13, and 14 as they occur less than 40 times which is a minuscule amount compared with the rest of the data.
 
 ```{r}
 #| label: fig-year-vs-priority
@@ -196,7 +197,7 @@ ggplot(priority_count_per_year, aes(x = year, y = count, color = as.factor(prior
 
 ```
 
-@fig-year-vs-1-unit-arrived and @fig-year-vs-2-units-arrived show how the number of units dispatched per year changed, with an overall positive trend until 2020 when the number dropped drastically inline with COVID-19 as mentioned previously. After which the initial drop numbers jump back up and resume the positive trend. It is worth noting we only look at 1 and 2 units dispatched as those are by far the most common dispatch numbers and we can see they both follow a similar trend.
+@fig-year-vs-1-unit-arrived and @fig-year-vs-2-units-arrived show how the number of units dispatched per year changed, with an overall positive trend until 2020 when the number dropped drastically in line with COVID-19 as mentioned previously. After which, the initial drop numbers jump back up and resume the positive trend. It is worth noting that we only look at 1 and 2 units dispatched as those are by far the most common dispatch numbers and we can see they both follow a similar trend.
 
 ```{r}
 #| label: fig-year-vs-1-unit-arrived
@@ -209,6 +210,7 @@ ggplot(priority_count_per_year, aes(x = year, y = count, color = as.factor(prior
 units_count_per_year <- cleaned_data %>%
   group_by(year, units_arrived_at_scene) %>%
   summarise(count = n()) %>%
+  # Filter out low numbers
   filter(count>100000) %>%
   arrange(year, units_arrived_at_scene)
 
@@ -230,12 +232,16 @@ ggplot(units_count_per_year, aes(x = year, y = count, color = as.factor(units_ar
 #| echo: false
 #| warning: false
 #| message: false
+
+# Calculate number of times each priority number appears each year
 units_count_per_year2 <- cleaned_data %>%
   group_by(year, units_arrived_at_scene) %>%
   summarise(count = n()) %>%
+  #Filter out low and extremely high numbers
   filter(count<100000 & count>10000) %>%
   arrange(year, units_arrived_at_scene)
 
+# Plot years vs priority number
 ggplot(units_count_per_year2, aes(x = year, y = count, color = as.factor(units_arrived_at_scene), group = units_arrived_at_scene)) +
   geom_line(size = 1) +
   geom_point(size = 2) +
@@ -249,11 +255,13 @@ ggplot(units_count_per_year2, aes(x = year, y = count, color = as.factor(units_a
 
 # Discussion {#sec-discussion}
 
-We have seen from the results section that there was a significant drop in the number of calls Toronto Paramedic Services received during the pandemic and a steady increase afterwards. However, this doesn't explain the increased wait time as the number of calls is still less than pre-COVID, but if we take into account the full context with many health care workers feelings burned and considering changing career paths @citeStatsCan. This coupled with the increase in calls and units dispatched after the COVID-19 pandemic ended resulted in the Toronto Paramedic Services being under equipped to deal with the increase in call volume. Furthermore, the increase in reports of priority 1 and 3, which are life-threatening or possibly life-threatening situations means that there was a need for experienced medical personnel at a time when there was a shortage. All these factors combined most likely resulted in longer wait times for Torontonians in need of medical assistance.
+We have seen from the results section that there was a significant drop in the number of calls Toronto Paramedic Services received during the pandemic and a steady increase afterward. 
+However, this doesn't fully account for the increased wait times, as the volume of calls remains lower than pre-COVID levels. A more complete explanation considers the broader context, including many healthcare workers feeling burned out and contemplating career changes @citeStatsCan. This coupled with the increase in calls and units dispatched after the COVID-19 pandemic ended resulted in the Toronto Paramedic Services being under-equipped to deal with the increase in call volume. Furthermore, the increase in reports of priority 1 and 3, which are life-threatening or possibly life-threatening situations means that there was a need for experienced medical personnel at a time when there was a shortage. All these factors combined most likely resulted in longer wait times for Torontonians requiring medical assistance.
 
 # Weaknesses and next steps {#sec-nextsteps}
 
-A possible next step could be including the dispatch arrival time and seeing if there is any change within the time paramedic units take to respond to a request. As the data set I analyzed only contained the dispatch time I wasn't able to perform this calculation, however if completed we could get information on if the increased call wait times resulted in increased response times aswell. 
+A possible next step could be including the dispatch arrival time and seeing if there is any change within the time paramedic units take to respond to a request. As the data set I analyzed only contained the dispatch time I couldn't perform this calculation, however, if completed we could get information on whether the increased call wait times resulted in increased response times as well. 
+
 \newpage
 
 \appendix
