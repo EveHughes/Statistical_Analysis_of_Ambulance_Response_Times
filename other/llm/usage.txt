@@ -1520,3 +1520,17 @@ Summarise Adjustment:
 As before, the .groups = 'drop' argument is used to drop extra grouping after summarization for easier further operations.
 This approach will give you a priority_count_per_year dataframe that excludes the specified priority_number values, allowing you to analyze only the relevant data. Let me know if you need any further assistance!
 
+user
+edit this abstract: "The Toronto Paramedic Services respond to all ambulance dispatch requests within the. Over the last few years there have been complaints about increased call wait times and a lack of ambulances availbe. This paper analyzed the number of dispatches and severity of dispatch requests per year. We found that the increased wait times were caused by an more frequent and severe calls post COVID-19 and a lack first responders."
+ChatGPT said:
+ChatGPT
+Here’s an edited version of your abstract:
+
+The Toronto Paramedic Services respond to all ambulance dispatch requests across the city. In recent years, there have been growing concerns about increased call wait times and a shortage of available ambulances. This paper analyzes the number and severity of dispatch requests over the years. Our findings indicate that longer wait times are primarily due to a higher frequency of severe emergency calls following the COVID-19 pandemic, coupled with a shortage of first responders.
+
+Key improvements:
+
+Clarified phrasing for smoother flow.
+Removed "within the" (incomplete sentence).
+Corrected minor grammar issues like "an more frequent" to "a higher frequency of."
+Reworded to emphasize key points more clearly.
