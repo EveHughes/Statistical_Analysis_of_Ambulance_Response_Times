@@ -24,11 +24,3 @@ The repo is structured as:
 ## Statement on LLM usage
 
 Aspects of the code such as the simulation script, cleaning script, testing script, and R code within the quorto paper were written with the help of chatGPTand the entire chat history is available in inputs/llms/usage.txt.
-
-## Some checks
-
-- [ ] Change the rproj file name so that it's not starter_folder.Rproj
-- [ ] Change the README title so that it's not Starter folder
-- [ ] Remove files that you're not using
-- [ ] Update comments in R scripts
-- [ ] Remove this checklist
