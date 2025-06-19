@@ -13,25 +13,19 @@ toc-depth: 2
 bibliography: references.bib
 ---
 
-```{r}
+```{python}
 #| include: false
 #| warning: false
 #| message: false
-#| 
-# Package loading
-# install.packages("modeest")
-library(tidyverse)
-library(dplyr)
-library(here)
-library(tibble)
-library(opendatatoronto)
-library(ggplot2)
-library(knitr)
-library(modeest)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 # Read data
-raw_data <- read_csv(here("data/raw_data/raw_ambulance_response_data.csv"))
-cleaned_data <- read_csv(here("data/analysis_data/cleaned_ambulance_response_data.csv"))
+raw_data = pd.read_csv("../data/raw_data/raw_ambulance_response_data.csv")
+cleaned_data = pd.read_csv("../data/analysis_data/cleaned_ambulance_response_data.csv")
 ```
 \newpage
 
@@ -76,19 +70,24 @@ The raw downloaded data is shown in @tbl-raw-data-1 and @tbl-raw-data-2, as you 
 
 -   **Comments/Examples** - Provides additional information on field name descriptions
 
-```{r}
+```{python}
 #| label: tbl-raw-data-1
 #| tbl-cap: First 6 entires of the Paramedic Services Incident Dataset
 #| echo: false
 #| warning: false
 #| message: false
 
-head_raw_data <- head(raw_data)
-# Note there is a typo in Description within the original data set itself
-knitr::kable(head_raw_data[,1:5], "simple",   col.names = c('ID', 'Dispatch_Time', 'Incident_Type', 'Priority_Number', 'Units_Arrived_At_Scene'))
+head_raw_data = raw_data.head()
+
+# Select first 5 columns and rename them
+table = head_raw_data.iloc[:, 0:5].copy()
+table.columns = ['ID', 'Dispatch_Time', 'Incident_Type', 'Priority_Number', 'Units_Arrived_At_Scene']
+
+# Display the table (Quarto will render this as a formatted table)
+table
 ```
 
-```{r}
+```{python}
 #| label: tbl-raw-data-2
 #| tbl-cap: First 6 entires of the Paramedic Services Incident Dataset (cont.)
 #| echo: false
@@ -96,31 +95,37 @@ knitr::kable(head_raw_data[,1:5], "simple",   col.names = c('ID', 'Dispatch_Time
 #| message: false
 
 
-# Table is broken into 2 sections to show all data on a single page
-knitr::kable(head_raw_data[,6:9], "simple",   col.names = c( 'Forward_Sortation_Area', 'Field Name', 'Desctiption/Definition', 'Comments/Examples'))
+table_part2 = head_raw_data.iloc[:, 5:9].copy()
+table_part2.columns = ['Forward_Sortation_Area', 'Field Name', 'Desctiption/Definition', 'Comments/Examples']
+
+table_part2
 ```
 
 ## Cleaned Data
 
 Since the data set is large, the main goal when cleaning the data was to reduce the size, meaning the cleaned data removed irrelevant columns from the raw data. The cleaned data shown in @tbl-cleaned-data-1  contains fewer columns than the raw data reducing the overall size significantly.
 
-```{r}
+```{python}
 #| label: tbl-cleaned-data-1
 #| tbl-cap: First 6 entires of the cleaned ambulance response data
 #| echo: false
 #| warning: false
 #| message: false
 
-head_cleaned_data <- head(cleaned_data)
-# Note there is a type in Description within the original data set itself
-knitr::kable(head_cleaned_data[,1:5], "simple",   col.names = c('dispatch_time', 'incident_type', 'priority_number', 'units_arrived_at_scene', 'year'))
+head_cleaned_data = cleaned_data.head()
+
+# Select first 5 columns and rename
+table_cleaned = head_cleaned_data.iloc[:, 0:5].copy()
+table_cleaned.columns = ['dispatch_time', 'incident_type', 'priority_number', 'units_arrived_at_scene', 'year']
+
+table_cleaned
 ```
 
 ## Summary of Data
 
 As we are interested in understanding the reason behind the reduced ambulance availability the only data types for which we can compute useful statistics are: the number of dispatches per year, incident_type, priority_number, and units_arrived_at_scene. @tbl-cleaned-data-summary shows a summary of the data columns we are interested in, the summary of these calculated statistics with mean for continuous data and mode for categorical data. The total number of dispatches per year is visualized in @fig-year-vs-priority. On average, the Toronto Paramedic Service received 285 000 calls or 780 calls per day, with an average of 1.1 units sent per call which is approximately 860 units dispatched daily.
 
-```{r}
+```{python}
 #| label: tbl-cleaned-data-summary
 #| tbl-cap: Summary of Incident Data Statistics
 #| echo: false
@@ -129,39 +134,70 @@ As we are interested in understanding the reason behind the reduced ambulance av
 
 
 # calculate statistics
-mode_incident_type <- mlv(cleaned_data$incident_type, method = "mfv")
-mode_priority_number <- mlv(cleaned_data$priority_number, method = "mfv")
-mean_units_at_scene <- mean(cleaned_data$units_arrived_at_scene)
+# Mode for categorical column (incident_type)
+mode_incident_type = cleaned_data["incident_type"].mode().iloc[0]
 
-total_dispatches_per_year <- cleaned_data %>%
-  group_by(year) %>%
-  summarise(total_dispatches = n())
-mean_dispatches_per_year <- mean(total_dispatches_per_year$total_dispatches)
+# Mode for numerical column (priority_number)
+mode_priority_number = cleaned_data["priority_number"].mode().iloc[0]
+
+# Mean for numerical column (units_arrived_at_scene)
+mean_units_at_scene = cleaned_data["units_arrived_at_scene"].mean()
+
+# Total dispatches per year
+total_dispatches_per_year = (
+    cleaned_data.groupby("year")
+    .size()
+    .reset_index(name="total_dispatches")
+)
+mean_dispatches_per_year = total_dispatches_per_year["total_dispatches"].mean()
 
 # Create a data frame to show values
-summary_table <- data.frame(
-  Field_Name = c("Mean Dispatches per Year", "Mean Units Arrived at Scene", "Mode Incident Type", "Mode Priority Number"),
-  Value = c(mean_dispatches_per_year, mean_units_at_scene, mode_incident_type, mode_priority_number)
-)
+summary_table = pd.DataFrame({
+    "Field_Name": [
+        "Mean Dispatches per Year",
+        "Mean Units Arrived at Scene",
+        "Mode Incident Type",
+        "Mode Priority Number"
+    ],
+    "Value": [
+        round(mean_dispatches_per_year, 2),
+        round(mean_units_at_scene, 2),
+        mode_incident_type,
+        mode_priority_number
+    ]
+})
 
 # Print the table
-kable(summary_table)
+summary_table
 ```
 
-```{r}
+```{python}
 #| label: fig-year-vs-dispatches
 #| fig-cap: Year vs. Total Number of Dispatches
 #| echo: false
 #| warning: false
 #| message: false
 
-cleaned_data |>
-ggplot(aes(x=year))+ 
-  xlab("Year")+
-  ylab("# of Dispatches")+
-  geom_bar(position = "dodge")+ 
-  scale_x_continuous(breaks = seq(min(cleaned_data$year), max(cleaned_data$year), by = 1)) + 
-  theme_minimal()
+# Count number of dispatches per year
+dispatch_counts = cleaned_data["year"].value_counts().sort_index()
+
+# Create numeric positions for bars
+x_pos = np.arange(len(dispatch_counts))  # e.g., [0, 1, 2, 3]
+
+# Plot
+plt.figure(figsize=(8, 5))
+plt.bar(x_pos, dispatch_counts.values)
+
+# Add axis labels and ticks
+plt.xlabel("Year")
+plt.ylabel("# of Dispatches")
+plt.xticks(ticks=x_pos, labels=dispatch_counts.index.astype(str), rotation=45, ha='right')
+
+# Add styling
+plt.title("")
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
 
 ```
 
@@ -169,7 +205,7 @@ ggplot(aes(x=year))+
 
 @fig-year-vs-dispatches appears to show there isn't much increase in the number of dispatches over the years. However, we have to keep in mind the scale is in the hundreds of thousands, overall there is an increase of 8 000 calls per year with a dip in the number of calls during the COVID-19 pandemic causing people to delay medical care @citeAvoidingCare. Overall, roughly 860 units were dispatched per day within the city and as of 2024, the Toronto Paramedic Services has a fleet of 236 ambulances @citeParamedicReport meaning each ambulance would need to be used 3.5 times per day to meet the demand explaining the lack of ambulances available for the city to use. @fig-year-vs-priority shows the change in priority numbers of the calls over the years, as seen priority numbers 1 and 3 increase and the rest decrease or stay the same near the end of 2022. Also, it is worth noting I have chosen to drop low-priority numbers like 11, 12, 13, and 14 as they occur less than 40 times which is a minuscule amount compared with the rest of the data.
 
-```{r}
+```{python}
 #| label: fig-year-vs-priority
 #| fig-cap: Year vs. Priority Number
 #| echo: false
@@ -177,80 +213,111 @@ ggplot(aes(x=year))+
 #| message: false
 
 # Calculate number of times each priority number appears each year
-priority_count_per_year <- cleaned_data %>%
-  filter(!priority_number %in% c(11,12,13,14)) %>%  # Exclude specific priority numbers
-  group_by(year, priority_number) %>%
-  summarise(count = n(), .groups = 'drop') %>%  # Summarize the count and drop extra grouping
-  arrange(year, priority_number)
-  
+priority_count_per_year = (
+    cleaned_data[~cleaned_data["priority_number"].isin([11, 12, 13, 14])]
+    .groupby(["year", "priority_number"])
+    .size()
+    .reset_index(name="count")
+    .sort_values(["year", "priority_number"])
+)
 
 # Plot years vs priority number
-ggplot(priority_count_per_year, aes(x = year, y = count, color = as.factor(priority_number), group = priority_number)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  labs(title = "Change in Priority Number Over the Years",
-       x = "Year",
-       y = "Count of Priority Number",
-       color = "Priority Number") +
-  theme_minimal() +
-  scale_x_continuous(breaks = unique(priority_count_per_year$year))
+plt.figure(figsize=(10, 6))
+
+for priority in priority_count_per_year["priority_number"].unique():
+    df_subset = priority_count_per_year[priority_count_per_year["priority_number"] == priority]
+    plt.plot(df_subset["year"], df_subset["count"], label=str(priority), marker='o', linewidth=1.5)
+
+plt.title("Change in Priority Number Over the Years")
+plt.xlabel("Year")
+plt.ylabel("Count of Priority Number")
+plt.xticks(sorted(priority_count_per_year["year"].unique()))
+plt.legend(title="Priority Number", title_fontsize=10)
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
 
 ```
 
 @fig-year-vs-1-unit-arrived and @fig-year-vs-2-units-arrived show how the number of units dispatched per year changed, with an overall positive trend until 2020 when the number dropped drastically in line with COVID-19 as mentioned previously. After which, the initial drop numbers jump back up and resume the positive trend. It is worth noting that we only look at 1 and 2 units dispatched as those are by far the most common dispatch numbers and we can see they both follow a similar trend.
 
-```{r}
+```{python}
 #| label: fig-year-vs-1-unit-arrived
 #| fig-cap: Year vs. Number of Times 1 Unit Arrived at Scene
 #| echo: false
 #| warning: false
 #| message: false
 
-# Calculate number of times each priority number appears each year
-units_count_per_year <- cleaned_data %>%
-  group_by(year, units_arrived_at_scene) %>%
-  summarise(count = n()) %>%
-  # Filter out low numbers
-  filter(count>100000) %>%
-  arrange(year, units_arrived_at_scene)
+# Calculate number of times each units_arrived_at_scene value appears each year
+units_count_per_year = (
+    cleaned_data
+    .groupby(["year", "units_arrived_at_scene"])
+    .size()
+    .reset_index(name="count")
+)
 
-# Plot years vs priority number
-ggplot(units_count_per_year, aes(x = year, y = count, color = as.factor(units_arrived_at_scene), group = units_arrived_at_scene)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  labs(title = "Change in Units Dispatched Over the Years",
-       x = "Year",
-       y = "Units Arrived at Scene",
-       color = "Units Arrived at Scene") +
-  theme_minimal() +
-  scale_x_continuous(breaks = unique(units_count_per_year$year))
+# Filter out low-frequency combinations
+units_count_per_year = units_count_per_year[units_count_per_year["count"] > 100000]
+
+# Sort for consistency
+units_count_per_year = units_count_per_year.sort_values(["year", "units_arrived_at_scene"])
+
+# Plot years vs units_arrived_at_scene
+plt.figure(figsize=(10, 6))
+
+for units in units_count_per_year["units_arrived_at_scene"].unique():
+    df_subset = units_count_per_year[units_count_per_year["units_arrived_at_scene"] == units]
+    plt.plot(df_subset["year"], df_subset["count"], label=str(units), marker='o', linewidth=1.5)
+
+plt.title("Change in Units Dispatched Over the Years")
+plt.xlabel("Year")
+plt.ylabel("Units Arrived at Scene")
+plt.xticks(sorted(units_count_per_year["year"].unique()))
+plt.legend(title="Units Arrived at Scene", title_fontsize=10)
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
 ```
 
-```{r}
+```{python}
 #| label: fig-year-vs-2-units-arrived
 #| fig-cap: Year vs. Number of Times 2 Units Arrived at Scene
 #| echo: false
 #| warning: false
 #| message: false
 
-# Calculate number of times each priority number appears each year
-units_count_per_year2 <- cleaned_data %>%
-  group_by(year, units_arrived_at_scene) %>%
-  summarise(count = n()) %>%
-  #Filter out low and extremely high numbers
-  filter(count<100000 & count>10000) %>%
-  arrange(year, units_arrived_at_scene)
 
-# Plot years vs priority number
-ggplot(units_count_per_year2, aes(x = year, y = count, color = as.factor(units_arrived_at_scene), group = units_arrived_at_scene)) +
-  geom_line(size = 1) +
-  geom_point(size = 2) +
-  labs(title = "Change in Units Dispatched Over the Years",
-       x = "Year",
-       y = "Units Arrived at Scene",
-       color = "Units Arrived at Scene") +
-  theme_minimal() +
-  scale_x_continuous(breaks = unique(units_count_per_year$year))
+# Calculate number of times each units_arrived_at_scene value appears each year
+units_count_per_year2 = (
+    cleaned_data
+    .groupby(["year", "units_arrived_at_scene"])
+    .size()
+    .reset_index(name="count")
+)
+
+# Filter out low and extremely high values
+units_count_per_year2 = units_count_per_year2[
+    (units_count_per_year2["count"] < 100000) & (units_count_per_year2["count"] > 10000)
+]
+
+# Sort for consistent plotting
+units_count_per_year2 = units_count_per_year2.sort_values(["year", "units_arrived_at_scene"])
+
+# Plot years vs units_arrived_at_scene
+plt.figure(figsize=(10, 6))
+
+for units in units_count_per_year2["units_arrived_at_scene"].unique():
+    df_subset = units_count_per_year2[units_count_per_year2["units_arrived_at_scene"] == units]
+    plt.plot(df_subset["year"], df_subset["count"], label=str(units), marker='o', linewidth=1.5)
+
+plt.title("Change in Units Dispatched Over the Years")
+plt.xlabel("Year")
+plt.ylabel("Units Arrived at Scene")
+plt.xticks(sorted(units_count_per_year2["year"].unique()))
+plt.legend(title="Units Arrived at Scene", title_fontsize=10)
+plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.tight_layout()
+plt.show()
 ```
 
 # Discussion {#sec-discussion}
